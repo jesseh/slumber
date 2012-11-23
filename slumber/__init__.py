@@ -92,8 +92,12 @@ class Resource(ResourceAttributesMixin, object):
         s = self._store["serializer"]
         url = self._store["base_url"]
 
-        if self._store["append_slash"] and not url.endswith("/"):
+        if self._store["append_slash"] and not url.endswith("/") \
+            and not self._store["append_format"]:
             url = url + "/"
+            
+        if self._store["append_format"] and not url.endswith(self._store["format"]):
+            url = url + ".%s" % self._store["format"]
 
         resp = self._store["session"].request(method, url, data=data, params=params, headers={"content-type": s.get_content_type(), "accept": s.get_content_type()})
 
@@ -175,7 +179,8 @@ class Resource(ResourceAttributesMixin, object):
 
 class API(ResourceAttributesMixin, object):
 
-    def __init__(self, base_url=None, auth=None, format=None, append_slash=True, session=None, serializer=None):
+    def __init__(self, base_url=None, auth=None, format=None, append_slash=True,
+                 append_format=False):
         if serializer is None:
             s = Serializer(default=format)
 
@@ -183,6 +188,7 @@ class API(ResourceAttributesMixin, object):
             "base_url": base_url,
             "format": format if format is not None else "json",
             "append_slash": append_slash,
+            "append_format": append_format,
             "session": requests.session(auth=auth) if session is None else session,
             "serializer": s,
         }
